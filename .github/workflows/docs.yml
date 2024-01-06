@@ -6,11 +6,11 @@ on:
 
 jobs:
     build:
-        runs-on: macos-latest
+        runs-on: macos-13
         steps:
             - uses: actions/checkout@v3
             - name: Run generate_docs.sh
-              run: ./generate_docs.sh
+              run: bash generate_docs.sh
             - name: Push
               uses: s0/git-publish-subdir-action@develop
               env:
