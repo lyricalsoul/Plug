@@ -95,7 +95,6 @@ public class PluginManager {
 
         let hash = try determineHash(path: path)
         if let whitelist = whitelist {
-            print("Hash: \(hash)")
             if !whitelist.canOpenPlugin(withHash: hash) {
                 throw PluginError.securityError
             }

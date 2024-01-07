@@ -10,7 +10,11 @@ let package = Package(
     products: [
         .library(
             name: "Plug",
-            targets: ["Plug"])
+            targets: ["Plug"]),
+        .library(
+            name: "ExamplePlugin",
+            type: .dynamic,
+            targets: ["ExamplePlugin"]),
     ],
     dependencies: [
         .package(url: "https://github.com/apple/swift-syntax.git", from: "509.0.0"),
