@@ -2,16 +2,16 @@
 
 mkdir -p .docs
 
-swift package --allow-writing-to-directory .docs/Plug \
+swift package --allow-writing-to-directory .docs/plug \
     generate-documentation --target Plug \
     --disable-indexing \
     --transform-for-static-hosting \
-    --hosting-base-path "/Plug/Plug/" \
-    --output-path .docs/Plug
+    --hosting-base-path "/plug/" \
+    --output-path .docs/plug
 
-swift package --allow-writing-to-directory .docs/PlugMacros \
+swift package --allow-writing-to-directory .docs/plugmacros \
     generate-documentation --target PlugMacros \
     --disable-indexing \
     --transform-for-static-hosting \
-    --hosting-base-path "/Plug/PlugMacros/" \
-    --output-path .docs/PlugMacros
+    --hosting-base-path "´/plugmacros/" \
+    --output-path .docs/plugmacros
