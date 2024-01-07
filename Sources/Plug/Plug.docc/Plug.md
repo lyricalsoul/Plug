@@ -32,4 +32,4 @@ Then add `Plug` as a dependency to your target:
 
 ### Advanced
 
-- nothing yet!
+- <doc:Using-a-plugin-whitelist>

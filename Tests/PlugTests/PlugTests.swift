@@ -1,7 +1,16 @@
 import XCTest
 import MacroTesting
+import Crypto
 @testable import Plug
 @testable import PlugMacros
+
+#if os(macOS)
+let extensionName = "dylib"
+#elseif os(Linux)
+let extensionName = "so"
+#elseif os(Windows)
+let extensionName = "dll"
+#endif
 
 final class PlugMacroTests: XCTestCase {
     override func invokeTest() {
@@ -175,9 +184,87 @@ final class PlugManagerTests : XCTestCase {
         XCTAssertNil(builder)
         try await manager.loadPlugin(pathWithoutExtension: ".build/debug/libExamplePlugin")
     }
+
+    func testSimplePluginWhitelistName() async throws {
+        let whitelist = SimplePluginWhitelist([
+            .allowName("ExamplePlugin")
+        ])
+
+        let manager = PluginManager(whitelist: whitelist)
+        try await manager.loadPlugin(pathWithoutExtension: ".build/debug/libExamplePlugin")
+    }
+
+    func testSimplePluginWhitelistNameThrows() async throws {
+        let whitelist = SimplePluginWhitelist([
+            .allowName("ExamplePlugin2")
+        ])
+
+        let manager = PluginManager(whitelist: whitelist)
+        await assertThrowsAsyncError(try await manager.loadPlugin(pathWithoutExtension: ".build/debug/libExamplePlugin")) { error in
+            XCTAssertEqual(error as? PluginError, PluginError.securityError)
+        }
+    }
+
+    func testSimplePluginWhitelistMD5() async throws {
+        let md5 = try md5OfFile(path: ".build/debug/libExamplePlugin.\(extensionName)")
+        
+        let whitelist = SimplePluginWhitelist([
+            .allowMD5(md5)
+        ])
+
+        let manager = PluginManager(whitelist: whitelist)
+        try await manager.loadPlugin(pathWithoutExtension: ".build/debug/libExamplePlugin")
+    }
+
+    func testSimplePluginWhitelistMD5Throws() async throws {
+        let whitelist = SimplePluginWhitelist([
+            .allowMD5("1234567890")
+        ])
+
+        let manager = PluginManager(whitelist: whitelist)
+        await assertThrowsAsyncError(try await manager.loadPlugin(pathWithoutExtension: ".build/debug/libExamplePlugin")) { error in
+            XCTAssertEqual(error as? PluginError, PluginError.securityError)
+        }
+    }
+
+    func testFileBasedPluginWhitelistName() async throws {
+        let md5 = try md5OfFile(path: ".build/debug/libExamplePlugin.\(extensionName)")
+        try createWhitelistFile(md5: md5)
+
+        let whitelist = FileBasedPluginWhitelist(filePath: ".build/debug/plugin-whitelist.json")
+        
+        let manager = PluginManager(whitelist: whitelist)
+        try await manager.loadPlugin(pathWithoutExtension: ".build/debug/libExamplePlugin")
+    }
+
+    func testFileBasedPluginWhitelistNameThrows() async throws {
+        try createWhitelistFile(md5: "1234567890")
+
+        let whitelist = FileBasedPluginWhitelist(filePath: ".build/debug/plugin-whitelist.json")
+
+        let manager = PluginManager(whitelist: whitelist)
+        await assertThrowsAsyncError(try await manager.loadPlugin(pathWithoutExtension: ".build/debug/libExamplePlugin")) { error in
+            XCTAssertEqual(error as? PluginError, PluginError.securityError)
+        }
+    }
 }
 
+/// generate the md5 hash of a file
+func md5OfFile(path: String) throws -> String {
+    let file = try FileHandle(forReadingFrom: URL(fileURLWithPath: path))
+    let data = file.readDataToEndOfFile()
+    file.closeFile()
+    return Insecure.MD5.hash(data: data).map { String(format: "%02hhx", $0) }.joined()
+}
 
+/// Creates a whitelist file for testing
+func createWhitelistFile(md5: String) throws {
+    let whitelist = FileBasedPluginWhitelist.WhitelistFile(plugins: [
+        .init(name: "ExamplePlugin", version: "1.0.0", author: "John Doe", md5: md5)
+    ])
+    let data = try JSONEncoder().encode(whitelist)
+    try data.write(to: URL(fileURLWithPath: ".build/debug/plugin-whitelist.json"))
+}
 /// Asserts that an asynchronous expression throws an error.
 /// (Intended to function as a drop-in asynchronous version of `XCTAssertThrowsError`.)
 /// Taken from https://stackoverflow.com/a/76649847. Thanks, kind stranger ^^

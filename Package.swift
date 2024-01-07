@@ -8,23 +8,15 @@ let package = Package(
     name: "plug",
     platforms: [.macOS(.v10_15)],
     products: [
-        // Products define the executables and libraries a package produces, making them visible to other packages.
         .library(
             name: "Plug",
-            targets: ["Plug"]),
-        // dylib ExamplePlign for testing only
-        .library(
-            name: "ExamplePlugin",
-            type: .dynamic,
-            targets: ["ExamplePlugin"]),
-
+            targets: ["Plug"])
     ],
     dependencies: [
-        // Dependencies declare other packages that this package depends on.
         .package(url: "https://github.com/apple/swift-syntax.git", from: "509.0.0"),
-        // test dependencies
         .package(url: "https://github.com/pointfreeco/swift-macro-testing.git", from: "0.2.2"),
-        .package(url: "https://github.com/apple/swift-docc-plugin", from: "1.0.0")
+        .package(url: "https://github.com/apple/swift-docc-plugin", from: "1.0.0"),
+        .package(url: "https://github.com/apple/swift-crypto.git", from: "3.1.0")
     ],
     targets: [
         .macro(
@@ -34,16 +26,16 @@ let package = Package(
                 .product(name: "SwiftCompilerPlugin", package: "swift-syntax"),
             ]
         ),
-        // Targets are the basic building blocks of a package, defining a module or a test suite.
-        // Targets can depend on other targets in this package and products from dependencies.
         .target(
             name: "Plug",
-            dependencies: ["PlugMacros"]),
+            dependencies: ["PlugMacros", .product(name: "Crypto", package: "swift-crypto")]
+        ),
         .testTarget(
             name: "PlugTests",
             dependencies: ["Plug", "PlugMacros",
                 .product(name: "MacroTesting", package: "swift-macro-testing")
-            ]),
+            ]
+        ),
         .target(
             name: "ExamplePlugin",
             dependencies: ["Plug"])

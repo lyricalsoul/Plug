@@ -83,10 +83,13 @@ open class PluginBuilder {
 public struct LoadedPluginBuilder {
     /// The loaded plugin.
     private var builder: PluginBuilder
+    /// The MD5 hash of the plugin's binary.
+    public var md5: String
 
     /// Initializes the wrapper with a loaded plugin.
-    init (_ builder: PluginBuilder) {
+    init (_ builder: PluginBuilder, md5: String) {
         self.builder = builder
+        self.md5 = md5
     }
 
     /// Get the plugin's name.

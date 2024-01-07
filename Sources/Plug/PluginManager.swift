@@ -1,4 +1,5 @@
 import Foundation
+import Crypto
 
 // find out what extension to use. .dylib on macOS, .so on Linux and .dll on Windows
 #if os(macOS)
@@ -40,7 +41,6 @@ public enum PluginError : Error, CustomStringConvertible, Equatable {
 
 /// The `PluginManager` is a class responsible for plugin management. This is what you use in your application to load and unload plugins.
 public class PluginManager {
-    public init() {}
     typealias InitFunction = @convention(c) () -> UnsafeMutableRawPointer
 
     /// The symbol used to initialize the plugin. Don't change this unless you've changed it in the plugin (or if your plugin doesn't use the `@Plugin` macro).
@@ -49,6 +49,18 @@ public class PluginManager {
 
     /// The list of loaded plugins.
     private var loadedPlugins: [LoadedPlugin] = []
+
+    /// The whitelist to use.
+    private var whitelist: PluginIntegrity? = nil
+
+    /// Creates a new instance of `PluginManager`.
+    /// - Parameters:
+    ///  - whitelist: The whitelist to use. If `nil`, no whitelist will be used.
+    public init(whitelist: PluginIntegrity? = nil) {
+        if let whitelist = whitelist {
+            self.whitelist = whitelist
+        }
+    }
 
     /// Finds a loaded plugin by any of its details.
     /// - Parameters:
@@ -81,6 +93,14 @@ public class PluginManager {
             throw PluginError.invalidPath(path: path)
         }
 
+        let hash = try determineHash(path: path)
+        if let whitelist = whitelist {
+            print("Hash: \(hash)")
+            if !whitelist.canOpenPlugin(withHash: hash) {
+                throw PluginError.securityError
+            }
+        }
+
         let handle = dlopen(path, RTLD_NOW | RTLD_LOCAL)
         if handle == nil {
             throw PluginError.unknownError(message: String(cString: dlerror()!))
@@ -96,7 +116,14 @@ public class PluginManager {
         let builder: PluginBuilder = Unmanaged<PluginBuilder>.fromOpaque(pointer).takeRetainedValue()
         builder.build()
 
-        var wrapper: LoadedPluginBuilder? = LoadedPluginBuilder(builder)
+    
+        var wrapper: LoadedPluginBuilder? = LoadedPluginBuilder(builder, md5: hash)
+        if let whitelist = whitelist {
+            if !whitelist.acceptPlugin(wrapper!) {
+                throw PluginError.securityError
+            }
+        }
+        
         await closure?(wrapper!)
         
 
@@ -183,5 +210,12 @@ public class PluginManager {
                 await plugin.builder.receive(event: event, data: data)
             }
         }
+    }
+
+    private func determineHash(path: String) throws -> String {
+        let file = try FileHandle(forReadingFrom: URL(fileURLWithPath: path))
+        let data = file.readDataToEndOfFile()
+        file.closeFile()
+        return Insecure.MD5.hash(data: data).map { String(format: "%02hhx", $0) }.joined()
     }
 }
