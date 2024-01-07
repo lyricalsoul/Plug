@@ -30,14 +30,14 @@ let package = Package(
             name: "Plug",
             dependencies: ["PlugMacros", .product(name: "Crypto", package: "swift-crypto")]
         ),
-        .testTarget(
-            name: "PlugTests",
-            dependencies: ["Plug", "PlugMacros",
-                .product(name: "MacroTesting", package: "swift-macro-testing")
-            ]
-        ),
         .target(
             name: "ExamplePlugin",
-            dependencies: ["Plug"])
+            dependencies: ["Plug"]),
+        .testTarget(
+            name: "PlugTests",
+            dependencies: ["Plug", "PlugMacros", "ExamplePlugin",
+                .product(name: "MacroTesting", package: "swift-macro-testing")
+            ]
+        )
     ]
 )
