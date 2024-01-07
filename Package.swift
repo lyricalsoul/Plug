@@ -17,9 +17,6 @@ let package = Package(
             name: "ExamplePlugin",
             type: .dynamic,
             targets: ["ExamplePlugin"]),
-        .executable(
-            name: "ExampleApp",
-            targets: ["ExampleApp"]),
 
     ],
     dependencies: [
@@ -49,9 +46,6 @@ let package = Package(
             ]),
         .target(
             name: "ExamplePlugin",
-            dependencies: ["Plug"]),
-        .executableTarget(
-            name: "ExampleApp",
-            dependencies: ["Plug"]),
+            dependencies: ["Plug"])
     ]
 )
