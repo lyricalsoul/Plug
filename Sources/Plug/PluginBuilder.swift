@@ -1,9 +1,7 @@
 /// This protocol defines the interface for a plugin builder.
-/// Normally, you would not implement this protocol directly, since the `@Plugin` macro
-/// will generate a builder for you. However, if you want to implement your own builder,
-/// you can do so by implementing this protocol and passing it to `@Plugin`.
-/// For reference, check out the default implementation inserted by the `@Plugin` macro in
-/// Sources/PlugMacros/Macro.swift.
+/// Normally, you don't need to implement your own builder, since the `@Plugin` macro
+/// does that for you. However, if you need to implement your own builder,
+/// you can do so by implementing this protocol and passing it to the macro.
 open class PluginBuilder {
     /// Dictionary of event callbacks.
     var eventCallbacks: [String: (Any?) -> Void]  = [:]
@@ -71,6 +69,10 @@ open class PluginBuilder {
 
     public init () {}
 
+    /// Stores the plugin instance.
+    /// - Parameters:
+    ///    - plugin: The plugin instance to store.
+    /// - Returns: Void.
     public func storePlugin(_ plugin: (any PluginInterface)) {
         associatedPlugin = plugin
         associatedPlugin!.on(event: .load)

@@ -2,16 +2,14 @@
 
 mkdir -p .docs
 
-swift package --allow-writing-to-directory .docs/plug \
+swift package --allow-writing-to-directory .docs \
     generate-documentation --target Plug \
     --disable-indexing \
     --transform-for-static-hosting \
-    --hosting-base-path "/plug/" \
-    --output-path .docs/plug
+    --hosting-base-path "/" \
+    --output-path .docs
 
-swift package --allow-writing-to-directory .docs/plugmacros \
-    generate-documentation --target PlugMacros \
-    --disable-indexing \
-    --transform-for-static-hosting \
-    --hosting-base-path "´/plugmacros/" \
-    --output-path .docs/plugmacros
+# if we have a --dev flag, let's host the docs
+if [[ $1 == "--dev" ]]; then
+    npx http-server .docs -p 8080
+fi
